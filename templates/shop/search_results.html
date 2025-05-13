@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results for "{{ query }}" - Online Shop{% endblock %}
+
+{% block content %}
+    <h2>Search Results for "{{ query }}"</h2>
+    
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+        {% for product in products %}
+            <div class="col">
+                <div class="card h-100">
+                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text text-muted">{{ product.category.name }}</p>
+                        <p class="card-text">{{ product.description|truncatechars:100 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fs-5 fw-bold">{{ product.price }} so'm</span>
+                            <a href="{{ product.get_absolute_url }}" class="btn btn-primary">Batafsil</a>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-heart like-btn {% if request.user in product.likes.all %}liked{% endif %}" 
+                                   data-product-id="{{ product.id }}"></i>
+                                <span class="ms-1 like-count" data-product-id="{{ product.id }}">{{ product.likes.count }}</span>
+                            </div>
+                            <small class="text-muted">{{ product.comments.count }} comments</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">"{{ query }}" bo'yicha hech qanday mahsulot topilmadi .</div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+

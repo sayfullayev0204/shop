@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if category %}{{ category.name }}{% else %}All Products{% endif %} - ShopHub
+{% endblock %}
+
+{% block content %}
+    <div class="row g-4">
+        <!-- Sidebar with Categories -->
+        <div class="col-lg-3 mb-4" data-aos="fade-right">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Turkumlar</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'product_list' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if not category %}active{% endif %}">
+                        Barchasi
+                        <span class="badge bg-primary rounded-pill">{{ products.count }}</span>
+                    </a>
+                    {% for c in categories %}
+                        <a href="{{ c.get_absolute_url }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if category.id == c.id %}active{% endif %}">
+                            {{ c.name }}
+                            <span class="badge bg-primary rounded-pill">{{ c.products.count }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        
+        </div>
+        
+        <!-- Products Grid -->
+        <div class="col-lg-9">
+            
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for product in products %}
+                    <div class="col" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:100 }}">
+                        <div class="card h-100 position-relative">
+                            {% if forloop.counter <= 2 %}
+                                <span class="product-badge badge-new">New</span>
+                            {% endif %}
+                            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-0">{{ product.name }}</h5>
+                                    <span class="badge bg-primary rounded-pill">{{ product.category.name }}</span>
+                                </div>
+                                
+                                <!-- Star Rating - Fixed with semicolon -->
+                                <div class="mb-2">
+                                    <div class="stars-outer">
+                                        <div class="stars-inner" style="width: {{ product.get_star_percentage }}%;"></div>
+                                    </div>
+                                    <span class="rating-count">({{ product.ratings.count }})</span>
+                                </div>
+                                
+                                <p class="card-text">{{ product.description|truncatechars:80 }}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="price-tag">{{ product.price }} so'm</span>
+                                    <a href="{{ product.get_absolute_url }}" class="btn btn-primary">
+                                        <i class="fas fa-eye me-1"></i> Batafsil
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-heart like-btn {% if request.user in product.likes.all %}liked{% endif %}" 
+                                           data-product-id="{{ product.id }}"></i>
+                                        <span class="ms-1 like-count" data-product-id="{{ product.id }}">{{ product.likes.count }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <small class="text-muted me-3">
+                                            <i class="fas fa-comment me-1"></i> {{ product.comments.count }}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-eye me-1"></i> {{ product.view_count }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">Ushbu turkumda mahsulotlar mavjud emas.</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Star Rating Styles */
+    .stars-outer {
+        display: inline-block;
+        position: relative;
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+    }
+    
+    .stars-outer::before {
+        content: "\f005 \f005 \f005 \f005 \f005";
+        color: #ccc;
+    }
+    
+    .stars-inner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        width: 0;
+    }
+    
+    .stars-inner::before {
+        content: "\f005 \f005 \f005 \f005 \f005";
+        color: #f8ce0b;
+    }
+    
+    .rating-count {
+        margin-left: 5px;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    /* Product Badge Styles */
+    .product-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        z-index: 2;
+    }
+    
+    .badge-new {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    /* Product Actions */
+    .product-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        z-index: 2;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .card:hover .product-actions {
+        opacity: 1;
+    }
+    
+    .action-btn {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background-color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+    
+    /* Add styles for liked hearts */
+    .like-btn.liked {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add JavaScript to handle like functionality if needed
+    document.addEventListener('DOMContentLoaded', function() {
+        // Like button functionality
+        const likeButtons = document.querySelectorAll('.like-btn');
+        
+        likeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const likeCount = document.querySelector(`.like-count[data-product-id="${productId}"]`);
+                
+                // Send AJAX request to like/unlike
+                fetch('{% url "like_product" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: `product_id=${productId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.liked) {
+                        button.classList.add('liked');
+                    } else {
+                        button.classList.remove('liked');
+                    }
+                    likeCount.textContent = data.total_likes;
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login - Online Shop{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="mb-0">Kirish</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="d-grid gap-2 mt-4">
+                            <button class="btn btn-primary" type="submit">Kirish</button>
+                        </div>
+                    </form>
+                    <div class="border-top pt-3 mt-4">
+                        <small class="text-muted">
+                            Hisob kerakmi? <a href="{% url 'register' %}" class="ms-2">Ro'yxatdan o'tish</a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

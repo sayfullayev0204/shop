@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}Online Shop - Home{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row py-5" style="height: 650px;">
+        <div class="col-md-6 d-flex flex-column justify-content-center">
+            <h1 class="display-4 fw-bold mb-3">O'zingizga kerakli mahsulotlaringizni toping</h1>
+            <p class="lead mb-4">Ajoyib narxlar va sifatga ega ajoyib mahsulotlarni kashf eting.</p>
+            <div class="d-grid gap-2 d-md-flex">
+                <a href="{% url 'product_list' %}" class="btn btn-primary btn-lg px-4">Boshlash</a>
+                <a href="#categories" class="btn btn-outline-secondary btn-lg px-4">Turkumlarni ko'rish</a>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <img src="../../media/fo.jpg" alt="Hero Image" class="img-fluid rounded shadow-sm">
+        </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">Tanlangan mahsulotlar</h2>
+            <div class="filter-buttons mb-4">
+                <a href="{% url 'home' %}?filter=recent" class="btn {% if current_filter == 'recent' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <i class="fas fa-clock me-1"></i> Yaqinda
+                </a>
+                <a href="{% url 'home' %}?filter=most_liked" class="btn {% if current_filter == 'most_liked' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <i class="fas fa-heart me-1"></i> Eng Yoqqan
+                </a>
+                <a href="{% url 'home' %}?filter=most_commented" class="btn {% if current_filter == 'most_commented' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <i class="fas fa-comment me-1"></i> Eng ko'p sharhlanganlar
+                </a>
+                <a href="{% url 'home' %}?filter=highest_rated" class="btn {% if current_filter == 'highest_rated' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <i class="fas fa-star me-1"></i> Eng yuqori baholangan
+                </a>
+                <a href="{% url 'home' %}?filter=most_viewed" class="btn {% if current_filter == 'most_viewed' %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 mb-2">
+                    <i class="fas fa-eye me-1"></i> Eng ko'p ko'rilgan
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
+        {% for product in products %}
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm product-card">
+                    <div class="position-relative">
+                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                        <span class="badge bg-primary position-absolute top-0 end-0 m-2">{{ product.category.name }}</span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-danger">{{ product.price }} so'm</span>
+                            <div class="product-rating">
+                                <div class="stars-outer">
+                                    <div class="stars-inner" style="width: {{ product.get_star_percentage }}%;"></div>
+                                </div>
+                                <span class="rating-count">({{ product.ratings.count }})</span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <i class="fas fa-heart text-danger"></i> {{ product.likes.count }}
+                            </div>
+                            <div>
+                                <i class="fas fa-comment text-primary"></i> {{ product.comments.count }}
+                            </div>
+                            <div>
+                                <i class="fas fa-eye text-secondary"></i> {{ product.view_count }}
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a href="{{ product.get_absolute_url }}" class="btn btn-outline-primary">Batafsil</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">Hozircha mahsulotlar yo'q</div>
+            </div>
+        {% endfor %}
+    </div>
+    <!-- Categories Section -->
+    <div id="categories" class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">Turkum bo'yicha xarid qiling</h2>
+        </div>
+        {% for category in categories %}
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm category-card">
+                    <div class="card-body text-center">
+                        {% if category.image %}
+                            <img src="{{ category.image.url }}" class="img-fluid category-img mb-3" alt="{{ category.name }}">
+                        {% else %}
+                            <div class="category-placeholder mb-3">
+                                <i class="fas fa-tags fa-3x"></i>
+                            </div>
+                        {% endif %}
+                        <h3>{{ category.name }}</h3>
+                        <p class="text-muted">{{ category.description|truncatechars:100 }}</p>
+                        <a href="{{ category.get_absolute_url }}" class="btn btn-outline-primary">Batafsil</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+
+    // AJAX filter functionality
+    document.querySelectorAll('.filter-buttons a').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.getAttribute('href');
+            
+            // Update active button
+            document.querySelectorAll('.filter-buttons a').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-primary');
+            });
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            
+            // Load products via AJAX
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newProducts = doc.querySelector('.row-cols-1').innerHTML;
+                    document.querySelector('.row-cols-1').innerHTML = newProducts;
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Product Card Styles */
+    .product-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .product-card .card-img-top {
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    /* Category Card Styles */
+    .category-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .category-img {
+        height: 150px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    
+    .category-placeholder {
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        color: #6c757d;
+    }
+    
+    /* Star Rating Styles */
+    .stars-outer {
+        display: inline-block;
+        position: relative;
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        font-size: 0.8rem;
+    }
+    
+    .stars-outer::before {
+        content: "\f005 \f005 \f005 \f005 \f005";
+        color: #ccc;
+    }
+    
+    .stars-inner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        width: 0;
+    }
+    
+    .stars-inner::before {
+        content: "\f005 \f005 \f005 \f005 \f005";
+        color: #f8ce0b;
+    }
+    
+    .rating-count {
+        margin-left: 5px;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    /* Filter Button Styles */
+    .filter-buttons .btn {
+        border-radius: 20px;
+        padding: 0.375rem 1rem;
+    }
+</style>
+{% endblock %}

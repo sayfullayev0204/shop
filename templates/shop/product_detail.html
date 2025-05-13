@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ product.name }} - Online Shop{% endblock %}
+
+{% block content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Bosh sahifa</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'product_list' %}">mahsulotlar</a></li>
+            <li class="breadcrumb-item"><a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-0">
+            <div class="row g-0">
+                <!-- Product Image -->
+                <div class="col-md-6">
+                    <div class="p-4">
+                        <img src="{{ product.image.url }}" class="img-fluid rounded product-detail-img" alt="{{ product.name }}">
+                    </div>
+                </div>
+                
+                <!-- Product Details -->
+                <div class="col-md-6">
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h1 class="mb-0">{{ product.name }}</h1>
+                            <span class="badge bg-primary rounded-pill">{{ product.category.name }}</span>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="fas fa-heart like-btn {% if liked %}liked{% endif %}" data-product-id="{{ product.id }}"></i>
+                                <span class="ms-1 like-count" data-product-id="{{ product.id }}">{{ product.likes.count }}</span> Likelar
+                            </div>
+                            <div class="me-3">
+                                <i class="fas fa-comment text-muted"></i>
+                                <span class="ms-1">{{ comments.count }} sharhlar</span>
+                            </div>
+                            <div class="me-3">
+                                <i class="fas fa-eye text-muted"></i>
+                                <span class="ms-1">{{ product.view_count }} ko'rishlar</span>
+                            </div>
+                            <div>
+                                <i class="fas fa-user text-muted"></i>
+                                <span class="ms-1">{{ product.owner.first_name }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Star Rating Display -->
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="stars-outer">
+                                    <div class="stars-inner" style="width: {{ product.get_star_percentage }}%"></div>
+                                </div>
+                                <span class="ms-2">5 dan {{ product.average_rating|floatformat:1 }}</span>
+                                <span class="ms-2 text-muted">({{ product.ratings.count }} reytinglar)</span>
+                            </div>
+                        </div>
+                        
+                        <!-- User Rating Form -->
+                        {% if user.is_authenticated and not is_owner %}
+                            <div class="mb-4">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <div class="rate-product">
+                                        <h6>mahsulotni baxolash:</h6>
+                                        <div class="star-rating">
+                                            <input type="radio" id="star5" name="rating" value="5" {% if user_rating.rating == 5 %}checked{% endif %} />
+                                            <label for="star5" title="5 stars"><i class="fas fa-star"></i></label>
+                                            
+                                            <input type="radio" id="star4" name="rating" value="4" {% if user_rating.rating == 4 %}checked{% endif %} />
+                                            <label for="star4" title="4 stars"><i class="fas fa-star"></i></label>
+                                            
+                                            <input type="radio" id="star3" name="rating" value="3" {% if user_rating.rating == 3 %}checked{% endif %} />
+                                            <label for="star3" title="3 stars"><i class="fas fa-star"></i></label>
+                                            
+                                            <input type="radio" id="star2" name="rating" value="2" {% if user_rating.rating == 2 %}checked{% endif %} />
+                                            <label for="star2" title="2 stars"><i class="fas fa-star"></i></label>
+                                            
+                                            <input type="radio" id="star1" name="rating" value="1" {% if user_rating.rating == 1 %}checked{% endif %} />
+                                            <label for="star1" title="1 star"><i class="fas fa-star"></i></label>
+                                        </div>
+                                        <div class="clearfix"></div>
+                                        <button type="submit" name="rating_submit" class="btn btn-sm btn-outline-primary mt-2">Reytingni saqlash</button>
+                                    </div>
+                                </form>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <h5 class="mb-2">Izoh:</h5>
+                            <p>{{ product.description }}</p>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-4">
+                            <h2 class="price-tag mb-0">{{ product.price }} so'm</h2>
+                            <div class="ms-auto">
+                                {% if product.stock > 0 %}
+                                    <span class="stock-badge">
+                                        <i class="fas fa-check-circle me-1"></i> Omborda ({{ product.stock }} ta mavjud)
+                                    </span>
+                                {% else %}
+                                    <span class="stock-badge out-of-stock">
+                                        <i class="fas fa-times-circle me-1"></i> Omborda mavjud emas
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Comments Section -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h3 class="mb-0">Sharhlar ({{ comments.count }})</h3>
+        </div>
+        <div class="card-body">
+            <!-- Comment Form -->
+            {% if user.is_authenticated %}
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <img src="{{ user.profile.image.url }}" class="rounded-circle me-3" width="40" height="40" alt="{{ user.username }}">
+                            <div>
+                                <h6 class="mb-0">{{ user.first_name }}</h6>
+                                <small class="text-muted">Fikrlaringizni baham ko'ring</small>
+                            </div>
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ comment_form|crispy }}
+                            <div class="text-end mt-3">
+                                <button type="submit" name="comment_submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i> Sharhni yuborish
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Iltimos izoh qoldirish uchun<a href="{% url 'login' %}">login</a> qiling.
+                </div>
+            {% endif %}
+            
+            <!-- Comments List -->
+            <div class="comment-section">
+                {% for comment in comments %}
+                    <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    {% if comment.user.profile.image %}
+                                        <img src="{{ comment.user.profile.image.url }}" class="rounded-circle me-3" width="40" height="40" alt="{{ comment.user.username }}">
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0">{{ comment.user.first_name }}</h6>
+                                        <small class="text-muted">{{ comment.created|date:"F d, Y" }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="card-text">{{ comment.content }}</p>
+                            
+                            <!-- Reply Button (Only visible to product owner) -->
+                            {% if is_owner %}
+                                <div class="mt-3">
+                                    <button class="btn btn-sm btn-outline-primary reply-btn" data-comment-id="{{ comment.id }}">
+                                        <i class="fas fa-reply me-1"></i> Qayta javob
+                                    </button>
+                                    
+                                    <!-- Hidden Reply Form -->
+                                    <div class="reply-form mt-3" id="reply-form-{{ comment.id }}" style="display: none;">
+                                        <form method="post" action="{% url 'add_reply' comment.id %}">
+                                            {% csrf_token %}
+                                            {{ reply_form|crispy }}
+                                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                                <button type="submit" class="btn btn-sm btn-primary">Qayta javobni saqlash</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary cancel-reply" data-comment-id="{{ comment.id }}">Bekor qilish</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Replies to this comment -->
+                            {% if comment.replies.exists %}
+                                <div class="replies mt-3 ms-4 border-start ps-3">
+                                    <h6 class="text-muted">Qayta javob:</h6>
+                                    {% for reply in comment.replies.all %}
+                                        <div class="reply mb-2">
+                                            <div class="d-flex justify-content-between">
+                                                <h6 class="card-subtitle mb-1 text-muted">
+                                                    {{ reply.user.first_name }}
+                                                    {% if reply.user.profile.image %}
+                                                        <img src="{{ reply.user.profile.image.url }}" class="rounded-circle" width="20" height="20" alt="{{ reply.user.username }}">
+                                                    {% else %}
+                                                        <img src="../../media/profile_pics/user.png" class="rounded-circle" width="20" height="20" alt="{{ reply.user.username }}">
+                                                    {% endif %}
+                                                    {% if reply.user == user %}
+                                                        <span class="badge bg-success">Sizning javobingiz</span>
+                                                    {% endif %}
+                                                </h6>
+                                                <small class="text-muted">{{ reply.created|date:"F d, Y" }}</small>
+                                            </div>
+                                            <p class="card-text">{{ reply.content }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="alert alert-light">Hozircha izohlar yo‘q. Birinchi bo'lib fikr bildiring!</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Toggle reply form visibility
+        $('.reply-btn').click(function() {
+            const commentId = $(this).data('comment-id');
+            $(`#reply-form-${commentId}`).slideToggle();
+        });
+        
+        // Cancel reply
+        $('.cancel-reply').click(function() {
+            const commentId = $(this).data('comment-id');
+            $(`#reply-form-${commentId}`).slideUp();
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Star Rating Display Styles */
+    .stars-outer {
+        display: inline-block;
+        position: relative;
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+    }
+    
+    .stars-outer::before {
+        content: "\f005 \f005 \f005 \f005 \f005";
+        color: #ccc;
+    }
+    
+    .stars-inner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        width: 0;
+    }
+    
+    .stars-inner::before {
+        content: "\f005 \f005 \f005 \f005 \f005";
+        color: #f8ce0b;
+    }
+    
+    /* Interactive Star Rating Form Styles */
+    .star-rating {
+        direction: rtl;
+        display: inline-block;
+        padding: 0;
+    }
+    
+    .star-rating input[type="radio"] {
+        display: none;
+    }
+    
+    .star-rating label {
+        color: #bbb;
+        font-size: 1.5rem;
+        padding: 0;
+        cursor: pointer;
+        margin: 0 2px;
+    }
+    
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input[type="radio"]:checked ~ label {
+        color: #f8ce0b;
+    }
+    
+    .clearfix {
+        clear: both;
+    }
+    
+    /* Stock Badge Styles */
+    .stock-badge {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+    
+    .stock-badge.out-of-stock {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+    
+    /* Price Tag Styles */
+    .price-tag {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #d32f2f;
+    }
+</style>
+{% endblock %}
